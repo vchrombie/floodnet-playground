@@ -11,7 +11,7 @@ permissions:
 env:
   GIT_USER_NAME: github-actions[bot]
   GIT_USER_EMAIL: github-actions[bot]@users.noreply.github.com
-  GIT_SRC: 'dashboards'
+  GIT_SRC: 'grafana-backup'
   COMMIT_MSG: 'Backup grafana'
 
 jobs:
@@ -40,17 +40,17 @@ jobs:
           token: ${{ secrets.GH_PAT }}
           ref: ${{ matrix.branch }}
           path: ${{ env.GIT_SRC }}
-      - name: Export grafana dashboards
+      - name: Export grafana dashboards and alerts
         env:
           GRAFANA_API_KEY: ${{ secrets[matrix.api_key] }}
           GRAFANA_URL: ${{ secrets[matrix.url] }}
         run: |
-          ./.github/scripts/grafana-export-dashboards.sh
+          ./.github/scripts/grafana-export.py
       - name: Push to github
         working-directory: ${{ env.GIT_SRC }}
         run: |
           git config --global user.name $GIT_USER_NAME
           git config --global user.email $GIT_USER_EMAIL
           git add .
-          git diff --staged --quiet || git commit -m "$COMMIT_MSG"
+          git diff --staged --quiet || git commit -m "$COMMIT_MSG $(date +'%Y-%m-%d')"
           git push origin ${{ matrix.branch }}
