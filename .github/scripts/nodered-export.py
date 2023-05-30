@@ -16,8 +16,8 @@ args = parser.parse_args()
 print(f"Exporting Node-RED flows from {args.nodered_api_endpoint}")
 print(f"Saving to {args.git_src}", end='\n\n')
 
-# Obtain an access token
-auth_response = requests.post(
+print("Obtaining access token")
+response = requests.post(
     f'{args.nodered_api_endpoint}/auth/token',
     data={
         'client_id': 'node-red-admin',
@@ -27,31 +27,39 @@ auth_response = requests.post(
         'password': args.nodered_password,
     },
 )
-auth_response.raise_for_status()  # Raise an exception if the request failed
-access_token = auth_response.json()['access_token']
 
-# Use the access token to authenticate the next requests
+if response.status_code == 200:
+    print("Access token obtained successfully.", end='\n\n')
+else:
+    print("Failed to obtain access token.")
+    response.raise_for_status()  # Raise an exception if the request failed
+
+# Set up headers
+access_token = response.json()['access_token']
 headers = {'Authorization': f'Bearer {access_token}'}
 
-print(f"exporting flows started")
+print("exporting flows started")
 
-# Retrieve the flows
 flows_response = requests.get(f'{args.nodered_api_endpoint}/flows', headers=headers)
-flows_response.raise_for_status()  # Raise an exception if the request failed
+if flows_response.status_code == 200:
+    print("fetching flows.json successful")
+else:
+    print("fetching flows.json failed")
+    flows_response.raise_for_status()  # Raise an exception if the request failed
+
 flows = flows_response.json()
 
-# Save the flows to a JSON file
 with open(f'{args.git_src}/flows.json', 'w') as file:
     json.dump(flows, file, indent=2)
 
-print(f"exported flows.json")
+print("exported flows.json")
 
-print(f"exporting flows completed")
+print("exporting flows completed", end='\n\n')
 
-print(f"Revoking API token")
+print("Revoking access token")
 response = requests.post(f"{args.nodered_api_endpoint}/auth/revoke", headers=headers)
 if response.status_code == 200:
-    print(f"API token revoked successfully")
+    print("Access token revoked successfully.")
 else:
-    print(f"Failed to revoke API token")
-
+    print("Failed to revoke access token.")
+    response.raise_for_status()  # Raise an exception if the request failed
