@@ -1,0 +1,59 @@
+name: nodered-backup
+
+on:
+  schedule:
+    - cron:  '0 5 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  GIT_USER_NAME: github-actions[bot]
+  GIT_USER_EMAIL: github-actions[bot]@users.noreply.github.com
+  GIT_SRC: 'nodered-backup'
+  COMMIT_MSG: 'Backup nodered'
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        instance: ['dep', 'main']
+        include:
+          - instance: 'dep'
+            branch: 'dep-azure-1'
+            api_endpoint: 'DEP_NODERED_API_ENDPOINT'
+            username: 'DEP_NODERED_USERNAME'
+            password: 'DEP_NODERED_PASSWORD'
+          - instance: 'main'
+            branch: 'main-azure-1'
+            api_endpoint: 'MAIN_NODERED_API_ENDPOINT'
+            username: 'MAIN_NODERED_USERNAME'
+            password: 'MAIN_NODERED_PASSWORD'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Checkout nodered backup repo
+        uses: actions/checkout@v3
+        with:
+          repository: vchrombie/floodnet-nodered
+          token: ${{ secrets.GH_PAT }}
+          ref: ${{ matrix.branch }}
+          path: ${{ env.GIT_SRC }}
+      - name: Export nodered flows
+        env:
+          NODERED_API_ENDPOINT: ${{ secrets[matrix.api_endpoint] }}
+          NODERED_USERNAME: ${{ secrets[matrix.username] }}
+          NODERED_PASSWORD: ${{ secrets[matrix.password] }}
+        run: |
+          ./.github/scripts/nodered-export.py
+      - name: Push to github
+        working-directory: ${{ env.GIT_SRC }}
+        run: |
+          git config --global user.name $GIT_USER_NAME
+          git config --global user.email $GIT_USER_EMAIL
+          git add .
+          git diff --staged --quiet || git commit -m "$COMMIT_MSG $(date +'%Y-%m-%d')"
+          git push origin ${{ matrix.branch }}
