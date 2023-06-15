@@ -38,7 +38,8 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: vchrombie/floodnet-hasura
-          token: ${{ secrets.GITHUB_TOKEN }}
+          ssh-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          persist-credentials: true
           ref: ${{ matrix.branch }}
           path: ${{ env.GIT_SRC }}
       - name: Export hasura metadata
