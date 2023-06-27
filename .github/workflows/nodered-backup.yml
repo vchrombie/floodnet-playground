@@ -49,6 +49,7 @@ jobs:
           NODERED_USERNAME: ${{ secrets[matrix.username] }}
           NODERED_PASSWORD: ${{ secrets[matrix.password] }}
         run: |
+          git rm -r .
           ./.github/scripts/nodered-export.py
       - name: Push to github
         working-directory: ${{ env.GIT_SRC }}
