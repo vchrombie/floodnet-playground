@@ -42,10 +42,10 @@ for dash in dashboards:
 
         os.makedirs(f"{dashboards_path}/{folder}", exist_ok=True)
 
-        with open(f"{dashboards_path}/{folder}/{title}.json", 'w') as f:
+        with open(f"{dashboards_path}/{folder}/{dash_uid}.json", 'w') as f:
             json.dump(dashboard_details, f, indent=2)
 
-        print(f"exported {dashboards_path}/{folder}/{title}.json")
+        print(f"exported `{title}` to {dashboards_path}/{folder}/{dash_uid}.json")
 
 print("exporting dashboards completed", end='\n\n')
 

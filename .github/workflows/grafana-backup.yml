@@ -41,6 +41,10 @@ jobs:
           persist-credentials: true
           ref: ${{ matrix.branch }}
           path: ${{ env.GIT_SRC }}
+      - name: Resetting the directory
+        working-directory: ${{ env.GIT_SRC }}
+        run: |
+          git rm -r .
       - name: Export grafana dashboards and alerts
         env:
           GRAFANA_API_KEY: ${{ secrets[matrix.api_key] }}
